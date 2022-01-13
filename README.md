@@ -8,25 +8,25 @@ The scripts are arranged in a similar way to the methods section in the paper.
 
 ### Data preparing
 
-## genome binning:
+# genome binning:
 genome_binning/snake.gs2.vamb.py
-# checkM:
+## checkM:
 genome_binning/checkm/filter_binsize.sh
 genome_binning/checkm/checkm.pbs
-# dRep:
+## dRep:
 compare: genome_binning/drep/dRep.pbs
 dereplicate: genome_binning/drep/dRep_drep_prep.pbs
-# GTDB_Tk:
+## GTDB_Tk:
 genome_binning/gtdb_tk/gtdbtk.pbs
-# Mash: 
+## Mash: 
 genome_binning/mash/mash.pbs
-# CoverM:
+## CoverM:
 genome_binning/coverm/snake.coverm.py
 genome_binning/coverm/extract_rpkm_ab.R
 genome_binning/coverm/expected_coverage.R
 
-## Phylogeny:
-# ASTRAL:
+# Phylogeny:
+## ASTRAL:
 phylogeny/astral/sonicparanoid_to_nucltree.nofilter.pbs
 phylogeny/astral/sonic2fasta.all.py
 phylogeny/astral/sonicparanoid_prep/Ntogap.sh
@@ -35,55 +35,55 @@ phylogeny/astral/astral.pbs
 phylogeny/astral/clean_tree.sh
 phylogeny/astral/unroot_tree.R
 phylogeny/astral/gene_iqtrees.pbs
-# FastTree:
+## FastTree:
 phylogeny/fasttree/fasttree.pbs
 
-## Functional annotation:
+# Functional annotation:
 functional_annotation/interproscan.sh
 functional_annotation/cluster_GO.pbs
 functional_annotation/cluster_GO.R
 functional_annotation/get_geneids.R
 functional_annotation/combine_perm_GO.R
 
-## Statistical testing
-# PERMANOVA: 
+# Statistical testing
+## PERMANOVA: 
 statistical_testing/permanova/permanova.genetrees.gs2.R
-# Gene variance: 
+## Gene variance: 
 statistical_testing/gene_variance/get_gene_div.sh
 statistical_testing/gene_variance/seqdiv.py
-# Gene lengths: 
+## Gene lengths: 
 statistical_testing/gene_lengths/get_gene_lengths.sh
-# Regional entropy: 
+## Regional entropy: 
 statistical_testing/regional_entropy/get.reg_entropy.R
 
 
-## dN/dS:
-# codeml
+# dN/dS:
+## codeml
 /home/projects/cge/people/maloj/src/dnds/check_start_codon.py
 /home/projects/cge/people/maloj/src/dnds/remove_stop_codons.py
 /home/projects/cge/data/projects/5001/Binning_vamb/clusters/C3/codeml/codeml.ctl
 /home/projects/cge/people/maloj/src/dnds/codeml/prepare_codeml.sh
-# CSI phylogeny: 
+## CSI phylogeny: 
 SNP pos analyzer: /home/projects/cge/people/maloj/src/C14.dnds.pbs
 
 ### Plotting 
 
-## Fig 1:
+# Fig 1:
 map: plotting/worldmap.R
 
-## Fig 2:
+# Fig 2:
 A: plotting/phyla_region_plot.R
 B: plotting/PCA.R
 C: plotting/diversity.R
 D: plotting/plot_oxy.R
 
-## Fig 3:
+# Fig 3:
 A: plotting/plot_trees.R
 B: plotting/R2_genomes_pvals_plot.R
 C: plotting/ANOVA_R2_allclusters.R
 D: plotting/R2_genomes_pvals_plot.R
 
-## Supplementary:
+# Supplementary:
 Fig S1a: plotting/plot_metadata.R 
 Fig S1b: plotting/phyla_region_plot.R
 Fig S2: plotting/plot_trees.R
