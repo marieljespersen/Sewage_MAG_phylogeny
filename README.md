@@ -6,9 +6,9 @@ The scripts are arranged in a similar way to the methods section in the paper.
 
 
 
-### Data preparing
+# Data preparing
 
-# genome binning:
+### genome binning:
 genome_binning/snake.gs2.vamb.py
 ## checkM:
 genome_binning/checkm/filter_binsize.sh
@@ -25,7 +25,7 @@ genome_binning/coverm/snake.coverm.py
 genome_binning/coverm/extract_rpkm_ab.R
 genome_binning/coverm/expected_coverage.R
 
-# Phylogeny:
+### Phylogeny:
 ## ASTRAL:
 phylogeny/astral/sonicparanoid_to_nucltree.nofilter.pbs
 phylogeny/astral/sonic2fasta.all.py
@@ -38,14 +38,14 @@ phylogeny/astral/gene_iqtrees.pbs
 ## FastTree:
 phylogeny/fasttree/fasttree.pbs
 
-# Functional annotation:
+### Functional annotation:
 functional_annotation/interproscan.sh
 functional_annotation/cluster_GO.pbs
 functional_annotation/cluster_GO.R
 functional_annotation/get_geneids.R
 functional_annotation/combine_perm_GO.R
 
-# Statistical testing
+### Statistical testing
 ## PERMANOVA: 
 statistical_testing/permanova/permanova.genetrees.gs2.R
 ## Gene variance: 
@@ -57,7 +57,7 @@ statistical_testing/gene_lengths/get_gene_lengths.sh
 statistical_testing/regional_entropy/get.reg_entropy.R
 
 
-# dN/dS:
+### dN/dS:
 ## codeml
 /home/projects/cge/people/maloj/src/dnds/check_start_codon.py
 /home/projects/cge/people/maloj/src/dnds/remove_stop_codons.py
@@ -66,24 +66,24 @@ statistical_testing/regional_entropy/get.reg_entropy.R
 ## CSI phylogeny: 
 SNP pos analyzer: /home/projects/cge/people/maloj/src/C14.dnds.pbs
 
-### Plotting 
+# Plotting 
 
-# Fig 1:
+### Fig 1:
 map: plotting/worldmap.R
 
-# Fig 2:
+### Fig 2:
 A: plotting/phyla_region_plot.R
 B: plotting/PCA.R
 C: plotting/diversity.R
 D: plotting/plot_oxy.R
 
-# Fig 3:
+### Fig 3:
 A: plotting/plot_trees.R
 B: plotting/R2_genomes_pvals_plot.R
 C: plotting/ANOVA_R2_allclusters.R
 D: plotting/R2_genomes_pvals_plot.R
 
-# Supplementary:
+### Supplementary:
 Fig S1a: plotting/plot_metadata.R 
 Fig S1b: plotting/phyla_region_plot.R
 Fig S2: plotting/plot_trees.R
