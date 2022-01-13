@@ -1,0 +1,29 @@
+#!/bin/sh
+### Note: No commands may be executed until after the #PBS lines
+### Account information
+#PBS -W group_list=cge -A cge
+### Job name (comment out the next line to get the name of the script used as the job name)
+#PBS -N dRep
+### Output files (comment out the next 2 lines to get the job name used instead)
+#PBS -e dRep.err
+#PBS -o dRep.log
+### Only send mail when job is aborted or terminates abnormally
+#PBS -m n
+### Number of nodes
+#PBS -l nodes=1:ppn=40
+### Memory
+#PBS -l mem=180gb
+### Requesting time - format is <days>:<hours>:<minutes>:<seconds> (here, 12 hours)
+#PBS -l walltime=10:00:00:00
+  
+# Go to the directory from where the job was submitted (initial directory is $HOME)
+echo Working directory is $PBS_O_WORKDIR
+cd $PBS_O_WORKDIR
+
+#load necessary modules
+module unload R gcc
+module load anaconda3/2.2.0 tools ngs mash/2.2 mummer/3.23
+
+#run dRep on all metabat and vamb bins 
+dRep compare dRep_result -p 40 -pa 0.9 -sa 0.95 -g nc_genomes/*.fna
+

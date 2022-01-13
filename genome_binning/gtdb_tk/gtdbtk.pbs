@@ -1,0 +1,35 @@
+#!/bin/bash
+### Note: No commands may be executed until after the #PBS lines
+### Account information
+#PBS -W group_list=cge -A cge
+### Job name (comment out the next line to get the name of the script used as the job name)
+#PBS -N gtdbtk
+### Output files (comment out the next 2 lines to get the job name used instead)
+#PBS -e gtdbtk.err
+#PBS -o gtdbtk.log
+### Only send mail when job is aborted or terminates abnormally
+#PBS -m n
+### Number of nodes
+#PBS -l nodes=1:ppn=24
+### Memory
+#PBS -l mem=1500gb
+### Requesting time - format is <days>:<hours>:<minutes>:<seconds>
+#PBS -l walltime=10:00:00:00
+
+# Go to the directory from where the job was submitted (initial directory $HOME)
+echo Working directory is $PBS_O_WORKDIR
+cd $PBS_O_WORKDIR
+
+#this script is  used for running gtdb-tk on NC bins from checkM. In order to get the taxonomy of the bins.
+
+#activate environment and export path to database
+conda init bash
+eval "$(conda shell.bash hook)"
+conda activate gtdbtk
+export GTDBTK_DATA_PATH=/home/projects/cpr_10006/people/sira/databases/gtdb/release89
+gd="--genome_dir"
+odir="--out_dir"
+
+#run gtdb using 20 cores and continuing if an error occurs on a single genome
+#echo "gtdbtk classify_wf --genome_dir nc_genomes --out_dir nc_gtdbtk --cpus 24 --force"
+gtdbtk classify_wf $gd nc_genomes $odir nc_gtdbtk --cpus 24 --force

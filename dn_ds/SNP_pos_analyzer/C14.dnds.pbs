@@ -1,0 +1,75 @@
+#!/bin/sh
+### Note: No commands may be executed until after the #PBS lines
+### Account information
+#PBS -W group_list=cge -A cge
+### Job name (comment out the next line to get the name of the script used as the job name)
+#PBS -N dnds
+### Output files (comment out the next 2 lines to get the job name used instead)
+#PBS -e dnds.err
+#PBS -o dnds.log
+### Only send mail when job is aborted or terminates abnormally
+#PBS -m n
+### Number of nodes
+#PBS -l nodes=1:ppn=6
+### Memory
+#PBS -l mem=30gb
+### Requesting time - format is <days>:<hours>:<minutes>:<seconds>
+#PBS -l walltime=10:00:00:00
+echo Working directory is $PBS_O_WORKDIR
+cd $PBS_O_WORKDIR
+
+CLUSTER="C14"
+ORTHO_DIR="/home/projects/cge/data/projects/5001/Binning_vamb/clusters/$CLUSTER/ortho"
+DNDS_DIR="/home/projects/cge/data/projects/5001/Binning_vamb/clusters/$CLUSTER/dnds"
+REF="ls /home/projects/cge/data/projects/5001/Binning_vamb/clusters/$CLUSTER/dReplicated_genomes/dereplicated_genomes/*.fna"
+REF_GENOME=$(echo $REF | awk -F"/" '{print $13}' | awk -F ".fna" '{print $1}')
+
+mkdir dnds
+cd dnds
+mkdir gff
+
+# run prodigal 
+module load prodigal/2.6.3
+prodigal -f gff -o gff/$REF_GENOME.predicted_proteins.gff -i ../prodigal/nucleomes/$REF_GENOME.predicted_proteins.fna
+
+
+# Go to the cluster directory 
+echo cluster is $CLUSTER
+echo Working directory is $DNDS_DIR
+cd $DNDS_DIR
+mkdir ortho_groups
+cd ortho_groups
+
+
+ls $ORTHO_DIR | while read g; do
+	echo gene is $g
+
+	### split multiple alignment in multiple fasta files
+	gene=$(echo $g | awk -F".fna" '{print $1}')
+	mkdir $gene
+	cd $gene
+	awk '/^>/ {OUT=substr($1,2) ".fa"}; OUT {print >OUT}' $ORTHO_DIR/$gene.fna
+
+	# the rest can only be performed if the gene is observed in best-rep genome
+	if [[ -f "$REF_GENOME.fa" ]]; then
+		### correct gene name in dir to agree with gff file
+		mkdir ref
+		mv $REF_GENOME.fa ref/
+		awk -F " " '{ if ($0 ~ /^>/) { print ">"$2;} else { print $0}}' ref/$REF_GENOME.fa > ref/$REF_GENOME.correct.fa
+
+		mkdir fastas
+		mv *.fa fastas
+
+		### run nucmerto make vcf filer of all "non-ref"
+		perl /home/projects/cge/apps/CSI_phyl_scripts/nucmer2vcf.pl -r ref/$REF_GENOME.correct.fa fastas/*.fa
+		mkdir vcf
+		mv *.vcf vcf/
+
+		### run SNV-counting script from Rolf
+		mkdir dnds_count
+		perl /home/projects/cge/apps/CSI_phyl_scripts/snppos_analyzer.pl -o dnds_count -r ref/$REF_GENOME.correct.fa -g ../../gff/$REF_GENOME.predicted_proteins.gff vcf/*.vcf
+	fi
+
+	cd ..	
+	
+done 

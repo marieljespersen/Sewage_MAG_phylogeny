@@ -1,0 +1,33 @@
+#!/bin/sh
+### Note: No commands may be executed until after the #PBS lines
+### Account information
+#PBS -W group_list=cge -A cge
+### Job name (comment out the next line to get the name of the script used as the job name)
+#PBS -N checkM_6
+### Output files (comment out the next 2 lines to get the job name used instead)
+#PBS -e checkM_6.err
+#PBS -o checkM_6.log
+### Only send mail when job is aborted or terminates abnormally
+#PBS -m n
+### Number of nodes
+#PBS -l nodes=1:ppn=20
+### Memory
+#PBS -l mem=90gb
+### Requesting time - format is <days>:<hours>:<minutes>:<seconds> (here, 10 days)
+#PBS -l walltime=10:00:00:00
+  
+# Go to the directory from where the job was submitted (initial directory is $HOME)
+echo Working directory is $PBS_O_WORKDIR
+cd $PBS_O_WORKDIR
+
+conda init bash
+#conda create -n checkm python=3
+conda activate checkm
+conda install -c bioconda checkm-genome
+
+# run checkm 
+checkm lineage_wf dir_06 \
+checkm_06 \
+-t 20 \
+-f checkm_06/06.output
+

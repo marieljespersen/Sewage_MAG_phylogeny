@@ -1,0 +1,52 @@
+#!/bin/sh
+### Note: No commands may be executed until after the #PBS lines
+### Account information
+#PBS -W group_list=cge -A cge
+###Submitting multiple jobs
+#PBS -t 2-41%40
+### Job name (comment out the next line to get the name of the script used as the job name)
+#PBS -N cluster_GO
+### Output files (comment out the next 2 lines to get the job name used instead)
+#PBS -e log/cluster_GO.err
+#PBS -o log/cluster_GO.log
+### Only send mail when job is aborted or terminates abnormally
+#PBS -m n
+### Number of nodes
+#PBS -l nodes=1:ppn=20
+### Memory
+#PBS -l mem=90gb
+### Requesting time - format is <days>:<hours>:<minutes>:<seconds>
+#PBS -l walltime=10:00:00:00
+# Go to the directory from where the job was submitted (initial directory is $HOME)
+CLUSTER=C${PBS_ARRAYID}
+
+echo Working directory is $PBS_O_WORKDIR/$CLUSTER
+cd $PBS_O_WORKDIR/$CLUSTER
+
+
+C_GO="/home/projects/cge/people/maloj/src/functional_annotation/cluster_GO.R"
+GET_GENEID="/home/projects/cge/people/maloj/src/functional_annotation/get_geneids.R"
+COMBINE="/home/projects/cge/people/maloj/src/functional_annotation/combine_perm_GO.R"
+
+# Create concatenated interproscan output for input to R-script
+cat interproscan/*.interproscan.tsv > $CLUSTER.GO_annotations.tsv
+
+# Get higher level GO annotation for all proteins annotated by GO
+# Outputs three files, one for each GO ontology
+Rscript --vanilla $C_GO $CLUSTER $PBS_O_WORKDIR/$CLUSTER
+rm $PBS_O_WORKDIR/$CLUSTER/$CLUSTER.GO_annotations.tsv
+
+
+#get genetree id for proteins
+ls city_gene_trees/*.tree | sed 's/[.]tree//' | sed s'/city_gene_trees[/]//' > genetrees.txt
+
+
+# get geneids for annotated proteeins
+ORTHO="/home/projects/cge/data/projects/5001/Binning_vamb/clusters/$CLUSTER/sonicparanoid/runs/*/ortholog_groups/ortholog_groups.tsv"
+Rscript --vanilla $GET_GENEID $CLUSTER $PBS_O_WORKDIR/$CLUSTER $ORTHO
+
+# Combine permanova results with GO term annoations
+Rscript --vanilla $COMBINE $PBS_O_WORKDIR $CLUSTER
+
+
+

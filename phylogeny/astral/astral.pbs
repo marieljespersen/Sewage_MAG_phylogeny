@@ -1,0 +1,44 @@
+#!/bin/sh
+### Note: No commands may be executed until after the #PBS lines
+### Account information
+#PBS -W group_list=cge -A cge
+###Submitting multiple jobs
+#PBS -t 5%40
+### Job name (comment out the next line to get the name of the script used as the job name)
+#PBS -N astral
+### Output files (comment out the next 2 lines to get the job name used instead)
+#PBS -e log/astral.err
+#PBS -o log/astral.log
+### Only send mail when job is aborted or terminates abnormally
+#PBS -m n
+### Number of nodes
+#PBS -l nodes=1:ppn=20
+### Memory
+#PBS -l mem=90gb
+### Requesting time - format is <days>:<hours>:<minutes>:<seconds>
+#PBS -l walltime=10:00:00:00
+# Go to the directory from where the job was submitted (initial directory is $HOME)
+CLUSTER=C${PBS_ARRAYID}
+
+echo Working directory is $PBS_O_WORKDIR/$CLUSTER
+cd $PBS_O_WORKDIR/$CLUSTER
+
+UNROOT_TREE="/home/projects/cge/people/maloj/src/phylogeny/astral/unroot_tree.R"
+CLEAN_TREE="/home/projects/cge/people/maloj/src/phylogeny/astral/clean_tree.sh"
+
+# run astral
+cat region_gene_trees/*.tree > region_gene_trees.tree
+java -jar /home/people/maloj/src/Astral/astral.5.7.4.jar -i region_gene_trees.tree -o region_gene_trees.astral.tree
+
+## generate tree with traditional branch lengths using iqtree
+
+# first unroot tree
+# note this tree is unrooted, but it looks rooted to iq-tree
+# therefore unroot it using ape
+Rscript --vanilla ${UNROOT_TREE} $PBS_O_WORKDIR/$CLUSTER/region_gene_trees.astral.tree $PBS_O_WORKDIR/$CLUSTER/region_gene_trees.astral.unrooted.tree
+
+# perform branch length estimations
+module load iqtree/1.6.8
+iqtree -s ortho.alignment.phy -pre $CLUSTER.region.astral -m GTR+G -nt 5 -g region_gene_trees.astral.unrooted.tree -redo
+${CLEAN_TREE} $CLUSTER.region.astral.treefile $CLUSTER.region.astral.branch_length.clean.tree
+

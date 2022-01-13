@@ -1,0 +1,40 @@
+#!/bin/sh
+### Note: No commands may be executed until after the #PBS lines
+### Account information
+#PBS -W group_list=cge -A cge
+###Submitting multiple jobs
+#PBS -t 2-68%68
+### Job name (comment out the next line to get the name of the script used as the job name)
+#PBS -N mash_UHGG
+### Output files (comment out the next 2 lines to get the job name used instead)
+#PBS -e log/mash_UHGG.err
+#PBS -o log/mash_UHGG.log
+### Only send mail when job is aborted or terminates abnormally
+#PBS -m n
+### Number of nodes
+#PBS -l nodes=1:ppn=20
+### Memory
+#PBS -l mem=90gb
+### Requesting time - format is <days>:<hours>:<minutes>:<seconds> (here, 12 hours)
+#PBS -l walltime=10:00:00:00
+
+# Go to the directory from where the job was submitted (initial directory is $HOME)
+echo Working directory is $PBS_O_WORKDIR
+cd $PBS_O_WORKDIR
+
+# use PBS array to loop over chunk files of bins
+BIN_LIST=$(ls /home/projects/cge/data/projects/5001/Binning_vamb/all_drep_clusters/bin_chunks/ | head -n ${PBS_ARRAYID} | tail -n 1)
+echo bin list: $BIN_LIST
+
+module load mash/2.0
+mash sketch -p 40 -s 1000 -o mash_sketch_UHGG -i /home/databases/metagenomics/db/UHGG_20201207/UHGG.fna.gz
+
+# within each array job, loop through bins in the selected chunk file
+while read b; do
+mash dist mash_sketch_UHGG.msh ../links_to_all_clean_bins/$b.fna > distances/$b.dist
+awk '{if($3<=0.05) print $0}' distances/$b.dist > hits/$b.hits
+done < /home/projects/cge/data/projects/5001/Binning_vamb/all_drep_clusters/bin_chunks/$BIN_LIST
+
+
+# after running all mash and hits delete empty files in hits/
+# find . -type f -empty -delete

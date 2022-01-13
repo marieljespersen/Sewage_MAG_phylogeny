@@ -1,0 +1,35 @@
+#!/bin/sh
+### Note: No commands may be executed until after the #PBS lines
+### Account information
+#PBS -W group_list=cge -A cge
+###Submitting multiple jobs
+#PBS -t 1-2%2
+### Job name (comment out the next line to get the name of the script used as the job name)
+#PBS -N genetrees
+### Output files (comment out the next 2 lines to get the job name used instead)
+#PBS -e log/genetrees.err
+#PBS -o log/genetrees.log
+### Only send mail when job is aborted or terminates abnormally
+#PBS -m n
+### Number of nodes
+#PBS -l nodes=1:ppn=2
+### Memory
+#PBS -l mem=9gb
+### Requesting time - format is <days>:<hours>:<minutes>:<seconds>
+#PBS -l walltime=10:00:00:00
+# Go to the directory from where the job was submitted (initial directory is $HOME)
+CLUSTER=C${PBS_ARRAYID}
+
+echo Working directory is $PBS_O_WORKDIR/$CLUSTER
+cd $PBS_O_WORKDIR/$CLUSTER
+
+## create gene trees with model selection for each gene ##
+mkdir gene_trees
+ls -1 ortho_phy/* | perl -ne 'BEGIN{print "#!/bin/bash\n\n"}; chomp $_; if ($_ =~ m/ortho_group_(\d+)/) { print "iqtree -s $_ -pre gene_trees/gene_$1 -m TEST -nt 1\n"}' > start_gene_trees.sh
+chmod u+x start_gene_trees.sh 
+
+#load modules
+module load iqtree/1.6.8; 
+
+#run iqtreee
+./start_gene_trees.sh

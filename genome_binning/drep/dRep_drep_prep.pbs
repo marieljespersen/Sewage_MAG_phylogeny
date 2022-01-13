@@ -1,0 +1,54 @@
+#!/bin/sh
+### Note: No commands may be executed until after the #PBS lines
+### Account information
+#PBS -W group_list=cge -A cge
+### Job name (comment out the next line to get the name of the script used as the job name)
+#PBS -N dreplication
+### Output files (comment out the next 2 lines to get the job name used instead)
+#PBS -e dreplication.err
+#PBS -o dreplication.log
+### Only send mail when job is aborted or terminates abnormally
+#PBS -m n
+### Number of nodes
+#PBS -l nodes=1:ppn=40
+### Memory
+#PBS -l mem=180gb
+### Requesting time - format is <days>:<hours>:<minutes>:<seconds>
+#PBS -l walltime=10:00:00:00
+# Go to the directory from where the job was submitted (initial directory is $HOME)
+echo Working directory is $PBS_O_WORKDIR
+cd $PBS_O_WORKDIR
+
+### split dRep clusters into distinct dirs
+## Split dRep file into multiple files based on cluster column
+ls dRep_result/data_tables/prim_cluster_subsets/ | while read i
+do
+	mkdir prim_cluster_genomes/$i
+	while read l
+	do
+		fasta=$(echo $l | awk -F\, '{print $1}')
+		ln -s /home/projects/cge/data/projects/5001/Binning_vamb/nc_allgenomes/$fasta prim_cluster_genomes/$i/$fasta
+		#echo $fasta
+	done < dRep_result/data_tables/prim_cluster_subsets/$i
+	echo $i
+done
+
+### count number of bins in each dir
+ls prim_cluster_genomes/ | while read i
+do
+	bins=$(ls prim_cluster_genomes/$i | wc -l)
+	echo $bins $i >> count.bins
+	echo $i
+done
+
+### save clusters with more than one bin in file
+awk '{if ($1 > 1) print $0}' count.bins > clusters.morethan1
+
+
+#load necessary modules
+module unload R gcc
+module load anaconda3/4.4.0 tools ngs mash/2.2 mummer/3.23
+gi="--genomeInfo"
+
+#run cRep on all metabat and vamb bins
+dRep dereplicate dReplicated_genomes $gi checkm_table_for_drep.csv -p 40 -pa 0.9 -sa 0.95 -g NC_unzipped/*.fna

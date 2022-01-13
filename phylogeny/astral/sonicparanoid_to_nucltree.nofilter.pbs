@@ -1,0 +1,129 @@
+#!/bin/sh
+### Note: No commands may be executed until after the #PBS lines
+### Account information
+#PBS -W group_list=cge -A cge
+###Submitting multiple jobs
+#PBS -t 1-14%14
+### Job name (comment out the next line to get the name of the script used as the job name)
+#PBS -N sonicparanoid
+### Output files (comment out the next 2 lines to get the job name used instead)
+#PBS -e log/sonicparanoid.err
+#PBS -o log/sonicparanoid.log
+### Only send mail when job is aborted or terminates abnormally
+#PBS -m n
+### Number of nodes
+#PBS -l nodes=1:ppn=20
+### Memory
+#PBS -l mem=90gb
+### Requesting time - format is <days>:<hours>:<minutes>:<seconds>
+#PBS -l walltime=10:00:00:00
+# Go to the directory from where the job was submitted (initial directory is $HOME)
+echo Working directory is $PBS_O_WORKDIR
+cd $PBS_O_WORKDIR
+
+#Setting programmes
+SONIC2FASTA=/home/projects/cge/people/maloj/src/phylogeny/sonicparanoid_prep/sonic2fasta.all.py
+NTOGAP=/home/projects/cge/people/maloj/src/phylogeny/sonicparanoid_prep/Ntogap.sh
+PHYLIP_CONCAT=/home/projects/cge/people/maloj/src/phylogeny/sonicparanoid_prep/phylip.concatenate.py
+
+# Setting variables
+CLUSTER=C${PBS_ARRAYID}
+INPUT_TABLE=${CLUSTER}.bins.txt
+mkdir -p  $CLUSTER/ortho $CLUSTER/ortho_aln $CLUSTER/ortho_aln_xf $CLUSTER/ortho_phy
+
+### Dependencies
+module load perl/5.24.0
+#conda create -n sonicparanoid -c bioconda sonicparanoid
+
+### Run sonicparanoid
+eval "$(conda shell.bash hook)"
+echo `date` Starting sonicparanoid
+
+rm -rf $CLUSTER/sonicparanoid
+mkdir -p $CLUSTER/sonicparanoid
+#conda activate sonicparanoid
+source /home/people/maloj/sonicparanoid/bin/activate
+sonicparanoid -m fast -t 20 -i $CLUSTER/prodigal/proteomes -o $CLUSTER/sonicparanoid
+
+echo `date` Preparing files for first Tree Generation
+
+# extract orthologous groups
+# selecting all where there is the same amount of genes in the group as species
+# down until -10% of the genes
+
+# identifying input parameters for sonic2fasta
+orthofile=`ls -1 ${CLUSTER}/sonicparanoid/runs/*/ortholog_groups/ortholog_groups.tsv`
+MAXNCNUMBER=`wc -l $INPUT_TABLE | awk '{print $1}'`
+#MINNUMBER=`expr $MAXNCNUMBER / 2` # ortholog genes must be observed in half of the samples to be printed by sonic2fasta
+MINNUMBER=3
+
+### A new minimum is calculated in the sonic2fasta script
+conda activate base
+rm $CLUSTER/ortho/*
+ff="--fasta_folder"
+python ${SONIC2FASTA} --fna --i ${orthofile} --max $MAXNCNUMBER --min $MINNUMBER $ff $CLUSTER/prodigal/nucleomes --o $CLUSTER/ortho
+
+# perform multiple alignment
+# using mafft instead of muscle
+
+rm $CLUSTER/ortho_aln/*
+rm $CLUSTER/ortho_aln_xf/*
+rm $CLUSTER/ortho_phy/*
+
+module load mafft/7.453 trimal/1.4.1
+for file in `ls -1 $CLUSTER/ortho/*.fna`; do
+    ID=`echo $file | xargs basename | sed -r 's/\.f\w+//'`
+    miscount=`grep missing $file | wc -l`
+
+    if [ $miscount -lt 3 ]; then
+        mafft --auto --preservecase $file > $CLUSTER/ortho_aln/${ID}.aln
+        ${NTOGAP} $CLUSTER/ortho_aln/${ID}.aln $CLUSTER/ortho_aln_xf/${ID}.aln
+        trimal -in $CLUSTER/ortho_aln_xf/${ID}.aln -phylip -out $CLUSTER/ortho_phy/${ID}.ortho_phy
+    fi
+done
+
+# combine
+ls -1 $CLUSTER/ortho_phy/*ortho_phy > $CLUSTER/phy_files_to_concatenate
+python ${PHYLIP_CONCAT} --i $CLUSTER/phy_files_to_concatenate --o $CLUSTER/ortho.alignment --submatrix DNA
+
+
+##################### Running everythin again to skipping the missing samples ########################
+### The concatenated alignment must include missing genes in samples as --- 
+### otherwise the aligments from different samples have different lengths
+### therefore everything is run once at first including these and second excluding in order to get as many gene trees as possible (iqtree skips files if a single sample missing the gene)
+
+#Setting programmes
+SONIC2FASTA=/home/projects/cge/people/maloj/src/phylogeny/sonicparanoid_prep/sonic2fasta.skip.py
+
+echo `date` Preparing files for second Tree Generation
+
+# extract orthologous groups
+# selecting all where there is the same amount of genes in the group as species
+# down until -10% of the genes
+
+### A new minimum is calculated in the sonic2fasta script
+conda activate base
+rm $CLUSTER/ortho/*
+ff="--fasta_folder"
+python ${SONIC2FASTA} --fna --i ${orthofile} --max $MAXNCNUMBER --min $MINNUMBER $ff $CLUSTER/prodigal/nucleomes --o $CLUSTER/ortho
+
+# perform multiple alignment
+# using mafft instead of muscle
+
+rm $CLUSTER/ortho_aln/*
+rm $CLUSTER/ortho_aln_xf/*
+rm $CLUSTER/ortho_phy/*
+
+module load mafft/7.453 trimal/1.4.1
+for file in `ls -1 $CLUSTER/ortho/*.fna`; do
+    ID=`echo $file | xargs basename | sed -r 's/\.f\w+//'`
+    miscount=`grep missing $file | wc -l`
+    
+	# check if less than 3 samples are missing the gene, this does not work when sonic2fasta.skip is used, because it does not output missing samples in fasta
+    if [ $miscount -lt 3 ]; then
+        mafft --auto --preservecase $file > $CLUSTER/ortho_aln/${ID}.aln
+        ${NTOGAP} $CLUSTER/ortho_aln/${ID}.aln $CLUSTER/ortho_aln_xf/${ID}.aln
+        trimal -in $CLUSTER/ortho_aln_xf/${ID}.aln -phylip -out $CLUSTER/ortho_phy/${ID}.ortho_phy
+    fi
+done
+
