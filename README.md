@@ -106,9 +106,9 @@ map: plotting/worldmap.R
 ## Fig 2:
 ```
 A: plotting/phyla_region_plot.R
-B: plotting/PCA.R
-C: plotting/diversity.R
-D: plotting/plot_oxy.R
+B: plotting/plot_oxy.R
+C: plotting/PCA.R
+D: plotting/diversity.R
 ```
 
 ## Fig 3:
@@ -121,15 +121,18 @@ D: plotting/R2_genomes_pvals_plot.R
 
 ## Supplementary:
 ```
-Fig S1a: plotting/plot_metadata.R 
-Fig S1b: plotting/phyla_region_plot.R
+Fig S1: plotting/plot_metadata.R 
 Fig S2: plotting/plot_trees.R
-Fig S3: plotting/ANOVA_R2.R
-Fig S4: plotting/variance_organelle.R
-Fig S5: plotting/variance_organelle.R
-Fig S6: plotting/dnds.plot.R
-Fig S7: plotting/negative_r2.R
-Table S1: plotting/negative_r2.R
+Fig S3: plotting/heatmap_ANI.R
+Fig S4: plotting/plot_trees.R
+Fig S5: plotting/plot_trees.R
+Fig S6: plotting/plot_trees.R
+Fig S7: plotting/ANOVA_R2.R
+Fig S8: plotting/variance_organelle.R
+Fig S9: plotting/variance_organelle.R
+Fig S10: plotting/dnds.plot.R
+Fig S11: plotting/negative_r2.R
+Table S2: plotting/negative_r2.R
 ```
 
 
